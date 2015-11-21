@@ -2,10 +2,16 @@
 
 Repozitorij z gradivi pri predmetu APPR v študijskem letu 2015/16.
 
-## Tematika
+ANALIZA PROSILCEV ZA AZIL V DRŽAVAH EU
 
-Izbrali si boste temo, s katero se bo vaš projekt ukvarjal. Tukaj boste
-napisali, kje ste dobili podatke, ter kakšen je vaš cilj.
+V zadnjih mesecih je v središču dogajanja begunska kriza. Zaradi vojne v Siriji je svoje domove zapustilo več milijonov ljudi, veliko se jih je po želji za boljšim življenjem odpravilo v Evropo, destinacija večine pa je "obljubjena" Nemčija.
+
+Odločil sem se, da bom analiziral prosilce za azil v najbolj obleganih evropskih državah - Nemčiji, Španiji, Švedski, Franciji, Veliki Britaniji, Nizozemski, Švici, Italiji, Belgiji ter Madžarski. Zanima me predvsem poreklo migrantov, torej iz kje prihajajo, kje so zaprosili za azil in koliko odstotkov prošenj je bilo v zgoraj navedenih evropskih državah odobrenih.
+
+Analiza podatkov bo pogljobljena do te mere, da bom denimo ugotovil koliko Sirijcev je za azil zaprosilo v Nemčiji, koliko je bilo odobrenih prošenj ali zavrjenih, ter odstotek uspeha prošnje. Kot zgoraj zapisano bom naredil za vse države, ki sem jih omenil v zgornjem razdelku.
+
+Podatke bom črpal iz Eurostata, kjer je v tem trenutku zabeleženo število prosilcev za azil v posamezni evropski državi do meseca avgusta tega leta. Podatki so v XLS, CSV ter HTML obliki.
+
 
 ## Program
 
