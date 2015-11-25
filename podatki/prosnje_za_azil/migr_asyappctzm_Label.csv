@@ -1,0 +1,76 @@
+"DATASET: Asylum and first time asylum applicants by citizenship, age and sex Monthly data (rounded) [migr_asyappctzm]"
+
+"LAST UPDATE: 25.11.15 06:52:15"
+
+"EXTRACTION DATE: 25.11.15 22:05:14"
+
+"SOURCE OF DATA: Eurostat"
+
+"TIME"
+"2015M01"
+"2015M02"
+"2015M03"
+"2015M04"
+"2015M05"
+"2015M06"
+"2015M07"
+"2015M08"
+"2015M09"
+"2015M10"
+
+"GEO"
+"Belgium"
+"Germany (until 1990 former territory of the FRG)"
+"France"
+"Italy"
+"Hungary"
+"Netherlands"
+"Slovenia"
+"Sweden"
+"United Kingdom"
+"Switzerland"
+
+"CITIZEN"
+"Albania"
+"Serbia"
+"Kosovo (under United Nations Security Council Resolution 1244/99)"
+"Russia"
+"Extra EU-28"
+"Eritrea"
+"Afghanistan"
+"Pakistan"
+"Iraq"
+"Syria"
+
+"SEX"
+"Males"
+"Females"
+
+"AGE"
+"Total"
+
+"ASYL_APP"
+"Asylum applicant"
+
+"UNIT"
+"Person"
+
+"No footnotes available"
+
+"Available flags:"
+"b","break in time series"
+"c","confidential"
+"d","definition differs, see metadata"
+"e","estimated"
+"f","forecast"
+"i","see metadata (phased out)"
+"n","not significant"
+"p","provisional"
+"r","revised"
+"s","Eurostat estimate (phased out)"
+"u","low reliability"
+"z","not applicable"
+
+"Special value:"
+":","not available"
+
