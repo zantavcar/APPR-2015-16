@@ -10,8 +10,14 @@ Odločil sem se, da bom analiziral prosilce za azil v najbolj obleganih evropski
 
 Analiza podatkov bo pogljobljena do te mere, da bom denimo ugotovil koliko Sirijcev je za azil zaprosilo v Nemčiji, koliko je bilo odobrenih prošenj ali zavrjenih, ter odstotek uspeha prošnje. Kot zgoraj zapisano bom naredil za vse države, ki sem jih omenil v zgornjem razdelku.
 
-Podatke bom črpal iz Eurostata, kjer je v tem trenutku zabeleženo število prosilcev za azil v posamezni evropski državi do meseca avgusta tega leta. Podatki so v XLS, CSV ter HTML obliki.
+Podatke bom črpal iz Eurostata, kjer je v tem trenutku zabeleženo število prosilcev za azil v posamezni evropski državi do meseca avgusta tega leta. Podatke bom črpal iz 4 datotek formata CSV, eden bo HTML.
 
+Nekaj povezav do podatkovnih virov (Eurostat in World Bank):
+
+
+http://ec.europa.eu/eurostat/documents/2995521/7105334/3-10122015-AP-EN.pdf/04886524-58f2-40e9-995d-d97520e62a0e
+http://ec.europa.eu/eurostat/web/asylum-and-managed-migration/data/database
+http://data.worldbank.org/indicator/SM.POP.REFG
 
 ## Program
 
