@@ -127,7 +127,34 @@ http://en.wikipedia.org/wiki/Brazil_national_football_team
 naslovdata <- getURL(naslov)
 data<-readHTMLTable(naslovdata,stringsAsFactors=FALSE)
 
-#5. tabela - poglobljena analiza prosilcev za azil 
-#county of origin, starost in spol
 
+#5. tabela - poglobljena analiza prosilcev za azil (SPOL)
+uvoz.Spol <- function() {
+  Spol <- read.csv2("Spol.csv",
+                    na.strings=":",
+                    fileEncoding = "UTF-8",
+                    sep = ",")
+  #LOGIČNI VEKTORJI - IZ KJE PRIHAJA AZILANT
+  EU <- grepl("Extra EU-28",Spol[,"CITIZEN"])
+  Sirija <- grepl("Syria",Spol[,"CITIZEN"])
+  Afganistan <- grepl("Afghanistan",Spol[,"CITIZEN"])
+  Irak <- grepl("Iraq",Spol[,"CITIZEN"])
+  Eritreja <- grepl("Eritrea",Spol[,"CITIZEN"])
+  
+  #LOGIČNI VEKTORJI - SPOL AZILANTOV
+  
+  Moski <- grepl("Male",Spol[,"SEX"])
+  Zenske <- grepl("Female",Spol[,"SEX"])
+  Spol <- Spol[c(-5,-6,-7)]
+
+}
+#6. tabela - poglobljena analiza prosilcev za azil (STAROST)
+uvoz.Starost <- function () {
+  Starost <- read.csv2("Starost.csv",
+                       na.strings=":",
+                       fileEncoding = "UTF-8",
+                       sep = ",")
+  Starost <- Starost[c(-4,-6,-7)]
+  
+}
 #DOKONČAJ, EUROSTAT TRENUTNO NE DELUJE
