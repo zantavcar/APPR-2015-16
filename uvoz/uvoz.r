@@ -23,12 +23,10 @@ obcine <- uvozi.obcine()
 
 #2. FAZA
 
-#LOGIČNI VEKTORJI, KI PREPOZNAJO ZELJENO CETRTLETJE
-
 #Funkcija, ki uvozi podatke iz mape podatki
 #1.tabela - prošnje azilantov v letu 2015
 uvozi.Prosnje2015 <- function() {
-Prosnje2015 <- read.table("prosnje_azil_2015.csv",sep=";",
+Prosnje2015 <- read.table("podatki/prosnje_azil_2015.csv",sep=";",
                skip=8,nrows=32,
                na.strings=":",
                as.is=TRUE,
@@ -72,7 +70,7 @@ Prosnje2015<-uvozi.Prosnje2015()
 #preteklih dveh desetletjih z namenom primerjave današnje migracije,
 #in tiste na Balkanu po letu 1990
 uvozi.Tokovi <- function() {
-  Tokovi <- read.table("migrantski_tokovi.csv",sep=",",
+  Tokovi <- read.table("podatki/migrantski_tokovi.csv",sep=",",
                        na.strings="..",
                        as.is=TRUE,
                        skip=1,
@@ -102,7 +100,7 @@ Tokovi<-uvozi.Tokovi()
 #na milijon prebivalcev države
 
 uvozi.Prebivalci <- function () {
-  return(read.csv2("Prebivalstvo_EU.csv",
+  return(read.csv2("podatki/Prebivalstvo_EU.csv",
                    fileEncoding = "UTF-8",
                    skip=7,
                    nrows=50,
@@ -118,8 +116,16 @@ Prebivalci<-uvozi.Prebivalci()
 #odločitve pomenijo bo v zaključnem poročilu. Namen te tabele je, da bom kasneje
 #vstavil isto tabelo iz leta 2015 ter primerjal rezultate.
 
-#TA TABELA JE V HTML OBLIKI!!!!!!!!!!!!!!!
-#TO ŠE NAREDI
+library(rvest)
+library(dplyr)
+library(XML)
+library(RCurl)
+naslov <- "
+http://en.wikipedia.org/wiki/Brazil_national_football_team
+"
+
+naslovdata <- getURL(naslov)
+data<-readHTMLTable(naslovdata,stringsAsFactors=FALSE)
 
 #5. tabela - poglobljena analiza prosilcev za azil 
 #county of origin, starost in spol
