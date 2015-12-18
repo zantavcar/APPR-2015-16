@@ -1,23 +1,3 @@
-# 2. faza: Uvoz podatkov
-
-# Funkcija, ki uvozi podatke iz datoteke druzine.csv
-uvozi.druzine <- function() {
-  return(read.table("podatki/druzine.csv", sep = ";", as.is = TRUE,
-                      row.names = 1,
-                      col.names = c("obcina", "en", "dva", "tri", "stiri"),
-                      fileEncoding = "Windows-1250"))
-}
-
-# Zapišimo podatke v razpredelnico druzine.
-druzine <- uvozi.druzine()
-
-obcine <- uvozi.obcine()
-
-# Če bi imeli več funkcij za uvoz in nekaterih npr. še ne bi
-# potrebovali v 3. fazi, bi bilo smiselno funkcije dati v svojo
-# datoteko, tukaj pa bi klicali tiste, ki jih potrebujemo v
-# 2. fazi. Seveda bi morali ustrezno datoteko uvoziti v prihodnjih
-# fazah.
 
 #######################################################################
 
@@ -25,8 +5,8 @@ obcine <- uvozi.obcine()
 
 #Funkcija, ki uvozi podatke iz mape podatki
 #1.tabela - prošnje azilantov v letu 2015
-uvozi.Prosnje2015 <- function() {
-Prosnje2015 <- read.table("podatki/prosnje_azil_2015.csv",sep=";",
+uvoz.Prosnje2015 <- function() {
+Prosnje2015 <- read.table("prosnje_azil_2015.csv",sep=";",
                skip=8,nrows=32,
                na.strings=":",
                as.is=TRUE,
@@ -58,8 +38,24 @@ Q3 <- apply(Prosnje2015[,tretje.cetrtletje],1,
 Prosnje2015$Q1 <- Q1
 Prosnje2015$Q2 <- Q2
 Prosnje2015$Q3 <- Q3
+#izračunal bom prirast prošenj za azil v tretjem četrtletju 2015,
+#če za bazo vzamem drugo četrtletje
+prirast <- round(((Q3/Q2)-1)*100,2)
+#naredil bom faktor
+Prosnje2015$SpremembaQ2.Q3 <- paste0(prirast, " %")
 
-
+#Delež prošenj za posamezno EU državo v Q3
+delez <- round((Q3/sum(Q3)),3)*100
+urejene.velikosti <- c("manj kot 1 %","1-5 %",
+                       "5-10 %","več kot 10 %")
+kategorija <- rep("",length(delez))
+kategorija[delez<1] <- "manj kot 1 %"
+kategorija[delez>1 & delez<5] <- "1-5 %"
+kategorija[delez>5 & delez<10] <- "5-10 %"
+kategorija[delez>10] <- "več kot 10 %"
+kategorija <- factor(kategorija, levels=urejene.velikosti,
+                     ordered=TRUE)
+Prosnje2015$Delez<-kategorija
 return(Prosnje2015)
 }
 cat("Uvažam podatke prosilcev za azil v letu 2015...\n")
@@ -70,7 +66,7 @@ Prosnje2015<-uvozi.Prosnje2015()
 #preteklih dveh desetletjih z namenom primerjave današnje migracije,
 #in tiste na Balkanu po letu 1990
 uvozi.Tokovi <- function() {
-  Tokovi <- read.table("podatki/migrantski_tokovi.csv",sep=",",
+  Tokovi <- read.table("migrantski_tokovi.csv",sep=",",
                        na.strings="..",
                        as.is=TRUE,
                        skip=1,
@@ -99,36 +95,15 @@ Tokovi<-uvozi.Tokovi()
 #namenom kasnejše analize, ko bom izrazil število prošenj za azil
 #na milijon prebivalcev države
 
-uvozi.Prebivalci <- function () {
-  return(read.csv2("podatki/Prebivalstvo_EU.csv",
-                   fileEncoding = "UTF-8",
-                   skip=7,
-                   nrows=50,
-                   na.strings=":"
-                   ))
- } 
 
-cat("Uvažam podatke števila prebivalcev Evrope...\n")
-Prebivalci<-uvozi.Prebivalci()
   
 
 #4. tabela - uvoz rezultatov prošenj za azil v letu 2014. Opis, kaj določene
 #odločitve pomenijo bo v zaključnem poročilu. Namen te tabele je, da bom kasneje
 #vstavil isto tabelo iz leta 2015 ter primerjal rezultate.
 
-library(rvest)
-library(dplyr)
-library(XML)
-library(RCurl)
-naslov <- "
-http://en.wikipedia.org/wiki/Brazil_national_football_team
-"
+#5. tabela - poglobljena tabela prosilcev za azil (SPOL)
 
-naslovdata <- getURL(naslov)
-data<-readHTMLTable(naslovdata,stringsAsFactors=FALSE)
-
-
-#5. tabela - poglobljena analiza prosilcev za azil (SPOL)
 uvoz.Spol <- function() {
   Spol <- read.csv2("Spol.csv",
                     na.strings=":",
@@ -153,8 +128,16 @@ uvoz.Starost <- function () {
   Starost <- read.csv2("Starost.csv",
                        na.strings=":",
                        fileEncoding = "UTF-8",
-                       sep = ",")
+                       sep = ",",
+                       nrows = 9325)
   Starost <- Starost[c(-4,-6,-7)]
+  rownames(Starost)<- NULL
+  #Logični vektor - prihod v EU
+  prihodEU <- grepl("^European",Starost[,"GEO"])
+  #Ureditev tabele - starejši na vrh
+
   
-}
+ 
+
+
 #DOKONČAJ, EUROSTAT TRENUTNO NE DELUJE
