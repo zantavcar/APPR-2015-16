@@ -109,13 +109,6 @@ uvoz.Spol <- function() {
                     na.strings=":",
                     fileEncoding = "UTF-8",
                     sep = ",")
-  #LOGIČNI VEKTORJI - IZ KJE PRIHAJA AZILANT
-  EU <- grepl("Extra EU-28",Spol[,"CITIZEN"])
-  Sirija <- grepl("Syria",Spol[,"CITIZEN"])
-  Afganistan <- grepl("Afghanistan",Spol[,"CITIZEN"])
-  Irak <- grepl("Iraq",Spol[,"CITIZEN"])
-  Eritreja <- grepl("Eritrea",Spol[,"CITIZEN"])
-  
   #LOGIČNI VEKTORJI - SPOL AZILANTOV
   
   Moski <- grepl("Male",Spol[,"SEX"])
@@ -132,12 +125,33 @@ uvoz.Starost <- function () {
                        nrows = 9325)
   Starost <- Starost[c(-4,-6,-7)]
   rownames(Starost)<- NULL
-  #Logični vektor - prihod v EU
-  prihodEU <- grepl("^European",Starost[,"GEO"])
-  #Ureditev tabele - starejši na vrh
-
   
- 
+  #Ureditev tabele - starejši na vrh
+}
+ #7. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
+ uvoz.Origin <- function () {
+   Origin <- read.csv2("Origin.csv",
+                       na.strings = ":",
+                       fileEncoding="UTF-8",
+                       sep=",",
+                       nrows=2613)
+   Origin <- Origin[c(-4,-5,-6,-7,-8)]
+   rownames(Origin) <- NULL
+#za pet držav bom napravil tabelo prihodov migrantov v letošnjem letu po četrtletjih
+   države<-c("Albanija","Srbija","Kosovo",
+             "Eritreja","Afganistan","Irak",
+             "Sirija")
+   #logične vektorje za četrtletja že imamo, naredimo jih še za države
+   prihod.Albanija <- grepl("^Alb",Origin[,"CITIZEN"])
+   prihod.Kosovo <- grepl("^Kos",Origin[,"CITIZEN"])
+   prihod.Srbija <- grepl("^Ser",Origin[,"CITIZEN"])
+   prihod.Afganistan <- grepl("^Afg",Origin[,"CITIZEN"])
+   prihod.Sirija <- grepl("^Syr",Origin[,"CITIZEN"])
+   prihod.Eritreja <- grepl("^Eri",Origin[,"CITIZEN"])
+   prihod.Irak <- grepl("^Ira",Origin[,"CITIZEN"])
+   
+   
+                            }
 
 
 #DOKONČAJ, EUROSTAT TRENUTNO NE DELUJE
