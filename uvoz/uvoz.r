@@ -101,7 +101,36 @@ Tokovi<-uvozi.Tokovi()
 #4. tabela - uvoz rezultatov prošenj za azil v letu 2014. Opis, kaj določene
 #odločitve pomenijo bo v zaključnem poročilu. Namen te tabele je, da bom kasneje
 #vstavil isto tabelo iz leta 2015 ter primerjal rezultate.
-
+uvoz.Odlocitve2015 <- function() {
+  Odlocitve2015 <- read.csv2("Odlocitve2015.csv",
+                             na.strings=":",
+                             fileEncoding = "UTF-8",
+                             sep = ",")
+  Odlocitve2015 <- Odlocitve2015[c(-3,-4,-5,-7)]
+  EU <- grepl("^Euro",Odlocitve2015[,"GEO"])
+  Odlocitve2015 <- Odlocitve2015[EU,]
+  cetrtletja <- c("2015Q1","2015Q2","2015Q3")
+  #Logični vektorji za odločitve o azilantih
+  Positive <- grepl("Total positive decisions",Odlocitve2015[,"DECISION"])
+  Geneva <- grepl("^Geneva",Odlocitve2015[,"DECISION"])
+  Humanitarian <- grepl("^Human",Odlocitve2015[,"DECISION"])
+  Negative <- grepl("^Reje",Odlocitve2015[,"DECISION"])
+  Total <- grepl("Total",Odlocitve2015[,"DECISION"])
+  #nova tabela -> odlocitve po cetrtletjih v EU
+  positive <- Odlocitve2015[Positive,]["Value"]
+  geneva <- Odlocitve2015[Geneva,]["Value"]
+  humanitarian <- Odlocitve2015[Humanitarian,]["Value"]
+  negative <- Odlocitve2015[Negative,]["Value"]
+  total <- Odlocitve2015[Total,]["Value"]
+  
+  Odlocitve_EU <- data.frame(cetrtletja,positive,geneva,humanitarian,negative,total)
+  colnames(Odlocitve_EU) <- c("Q","Pozitivne","Geneva status","Humanitarian",
+                              "Negativne","Skupaj")
+  Odlocitve_EU <- Odlocitve_EU[c(4:6),]
+  
+  Odlocitve2015 <- uvozi.Odlocitve2015()
+  cat("Uvažam podatke o odločitvah...\n")
+}
 #5. tabela - poglobljena tabela prosilcev za azil (SPOL)
 
 uvoz.Spol <- function() {
@@ -114,6 +143,9 @@ uvoz.Spol <- function() {
   Moski <- grepl("Male",Spol[,"SEX"])
   Zenske <- grepl("Female",Spol[,"SEX"])
   Spol <- Spol[c(-5,-6,-7)]
+  
+  Spol <- uvoz.Spol()
+  cat("Uvažam podatke o spolu azilantov...\n")
 
 }
 #6. tabela - poglobljena analiza prosilcev za azil (STAROST)
@@ -127,6 +159,8 @@ uvoz.Starost <- function () {
   rownames(Starost)<- NULL
   
   #Ureditev tabele - starejši na vrh
+  Starost <- uvoz.Starost()
+  cat("Uvažam podatke starosti azilantov...\n")
 }
  #7. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
  uvoz.Origin <- function () {
@@ -150,8 +184,30 @@ uvoz.Starost <- function () {
    prihod.Eritreja <- grepl("^Eri",Origin[,"CITIZEN"])
    prihod.Irak <- grepl("^Ira",Origin[,"CITIZEN"])
    
-   
+   prihodV.EU <- grepl("^Euro",Origin[,"GEO"])
+   Origin <- Origin[prihodV.EU,]
+   rownames(Origin)<-NULL
+   #nova tabela
+   meseci <- paste0("2015M",1:11)
+   albanija <- Origin[prihod.Albanija,]["Value"]
+   albanija <- albanija[!is.na(albanija)]
+   kosovo <- Origin[prihod.Kosovo,]["Value"]
+   kosovo <- kosovo[!is.na(kosovo)]
+   srbija <- Origin[prihod.Srbija,]["Value"]
+   srbija <-srbija[!is.na(srbija)]
+   sirija <- Origin[prihod.Sirija,]["Value"]
+   sirija <- sirija[!is.na(sirija)]
+   afganistan <- Origin[prihod.Afganistan,]["Value"]
+   afganistan <- afganistan[!is.na(afganistan)]
+   irak <- Origin[prihod.Irak,]["Value"]
+   irak <- irak[!is.na(irak)]
+   eritreja <- Origin[prihod.Eritreja,]["Value"]
+   eritreja <- eritreja[!is.na(eritreja)]
+   Origin <- data.frame(meseci,sirija,irak,afganistan,eritreja,
+                        kosovo,albanija,srbija)
+   Origin <- uvoz.Origin()
+   cat("Uvažam podatke o državljanstvu azilantov...\n")
                             }
 
 
-#DOKONČAJ, EUROSTAT TRENUTNO NE DELUJE
+
