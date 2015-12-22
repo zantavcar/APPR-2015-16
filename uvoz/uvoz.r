@@ -62,10 +62,28 @@ kategorija[delez>10] <- "več kot 10 %"
 kategorija <- factor(kategorija, levels=urejene.velikosti,
                      ordered=TRUE)
 Prosnje2015$Delez<-kategorija
+
+drzave <-rownames(Prosnje2015)
+library("rvest")
+url <- "https://en.wikipedia.org/wiki/Area_and_population_of_European_countries"
+population <- url %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/table[2]') %>%
+  html_table()
+Prebivalstvo <- do.call(rbind.data.frame, population)
+rownames(Prebivalstvo)<-Prebivalstvo[,1]
+Prebivalstvo <-Prebivalstvo[drzave,]
+Prebivalstvo[,"Population"] <- gsub(",","",Prebivalstvo[,"Population"])
+st.prebivalcev <- as.numeric(Prebivalstvo[,"Population"])
+cetrtletja <- c("Q1","Q2","Q3")
+st.azilantov <- as.numeric(apply(Prosnje2015[,cetrtletja],
+                      1, function (x) sum(x,na.rm=TRUE)))
+azilantov.na.milijon <- round((1000000*st.azilantov)/st.prebivalcev)
+Prosnje2015$Azilanti_na_milijon <- azilantov.na.milijon
 return(Prosnje2015)
 }
 
-Prosnje2015<-uvozi.Prosnje2015()
+Prosnje2015<-uvoz.Prosnje2015()
 message("Uvažam podatke prosilcev za azil v letu 2015...\n")
 
 
@@ -86,21 +104,18 @@ uvoz.Odlocitve2015 <- function() {
   Geneva <- grepl("^Geneva",Odlocitve2015[,"DECISION"])
   Humanitarian <- grepl("^Human",Odlocitve2015[,"DECISION"])
   Negative <- grepl("^Reje",Odlocitve2015[,"DECISION"])
-  Total <- grepl("Total",Odlocitve2015[,"DECISION"])
+  Total <- grepl("^Total$",Odlocitve2015[,"DECISION"])
   #nova tabela -> odlocitve po cetrtletjih v EU
-  positive <- Odlocitve2015[Positive,]["Value"]
-  geneva <- Odlocitve2015[Geneva,]["Value"]
-  humanitarian <- Odlocitve2015[Humanitarian,]["Value"]
-  negative <- Odlocitve2015[Negative,]["Value"]
-  total <- Odlocitve2015[Total,]["Value"]
+  positive <- Odlocitve2015[Positive,"Value"]
+  geneva <- Odlocitve2015[Geneva,"Value"]
+  humanitarian <- Odlocitve2015[Humanitarian,"Value"]
+  negative <- Odlocitve2015[Negative,"Value"]
+  total <- Odlocitve2015[Total,"Value"]
   
-  Odlocitve_EU <- data.frame(cetrtletja,positive,geneva,humanitarian,negative,total)
-  colnames(Odlocitve_EU) <- c("Q","Pozitivne","Geneva status","Humanitarian",
-                              "Negativne","Skupaj")
-  Odlocitve_EU <- Odlocitve_EU[c(4:6),]
+  Odlocitve2015<- data.frame(cetrtletja,positive,geneva,humanitarian,negative,total)
 }
 
-Odlocitve2015 <- uvozi.Odlocitve2015()
+Odlocitve2015 <- uvoz.Odlocitve2015()
 message("Uvažam podatke o odločitvah...\n")
 
 #3. tabela - Število prebivalcev držav EU. To tabelo uvažam z
@@ -114,11 +129,18 @@ uvoz.Spol <- function() {
                     na.strings=":",
                     fileEncoding = "UTF-8",
                     sep = ",")
+  
+  prihodV.EU <- grepl("^Euro",Spol[,"GEO"])
+  Spol <- Spol[prihodV.EU,]
   #LOGIČNI VEKTORJI - SPOL AZILANTOV
   
   Moski <- grepl("Male",Spol[,"SEX"])
   Zenske <- grepl("Female",Spol[,"SEX"])
-  Spol <- Spol[c(-5,-6,-7)]
+  
+  M <-Spol[Moski,"Value"]
+  Ž <-Spol[Zenske,"Value"]
+  meseci <- paste0("2015M",1:11)
+  Spol <- data.frame(meseci,M,Ž)
 }
 Spol <- uvoz.Spol()
 message("Uvažam podatke o spolu azilantov...\n")
@@ -128,19 +150,30 @@ uvoz.Starost <- function () {
   Starost <- read.csv2("podatki/Starost.csv",
                        na.strings=":",
                        fileEncoding = "UTF-8",
-                       sep = ",",
-                       nrows = 9325)
-  Starost <- Starost[c(-4,-6,-7)]
-  rownames(Starost)<- NULL
+                       sep = ",")
+  prihodV.EU <- grepl("^Euro",Starost[,"GEO"])
+  Starost <- Starost[prihodV.EU,]
   
-  #Ureditev tabele - starejši na vrh
+  #Logicni vektorji (STAROST)
+  pod18 <- grepl("^Less",Starost[,"AGE"])
+  odrasli_mlajsi <-grepl("^From 18",Starost[,"AGE"])
+  odrasli_starejsi <- grepl("^From 35",Starost[,"AGE"])
+  nad65 <- grepl("^65",Starost[,"AGE"])
+  
+  meseci <- paste0("2015M",1:11)
+  Mladoletni <- Starost[pod18,"Value"]
+  Od_18_do_34 <- Starost[odrasli_mlajsi,"Value"]
+  Od_35_do_64 <- Starost[odrasli_starejsi,"Value"]
+  Nad_65 <- Starost[nad65,"Value"]
+  Starost <- data.frame(meseci,Mladoletni,Od_18_do_34,
+                        Od_35_do_64,Nad_65)
 }
 Starost <- uvoz.Starost()
 message("Uvažam podatke starosti azilantov...\n")
 
  #6. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
  uvoz.Origin <- function () {
-   Origin <- read.csv2("Origin.csv",
+   Origin <- read.csv2("podatki/Origin.csv",
                        na.strings = ":",
                        fileEncoding="UTF-8",
                        sep=",",
