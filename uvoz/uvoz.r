@@ -45,20 +45,20 @@ Prosnje2015$Q3 <- Q3
 prirastQ2_Q3 <- round(((Q3/Q2)-1)*100,2)
 prirastQ1_Q2 <- round(((Q2/Q1)-1)*100,2)
 
-Prosnje2015$SpremembaQ1.Q2 <- paste0(prirastQ1_Q2," %")
-Prosnje2015$SpremembaQ2.Q3 <- paste0(prirastQ2_Q3, " %")
+Prosnje2015$ChangeQ1.Q2 <- paste0(prirastQ1_Q2," %")
+Prosnje2015$ChangeQ2.Q3 <- paste0(prirastQ2_Q3, " %")
 
 
 #Delež prošenj za posamezno EU državo v Q3
 
 delez <- round((Q3/sum(Q3)),3)*100
-urejene.velikosti <- c("manj kot 1 %","1-5 %",
-                       "5-10 %","več kot 10 %")
+urejene.velikosti <- c("<1 %","1-5 %",
+                       "5-10 %",">10 %")
 kategorija <- rep("",length(delez))
-kategorija[delez<1] <- "manj kot 1 %"
+kategorija[delez<1] <- "<1 %"
 kategorija[delez>1 & delez<5] <- "1-5 %"
 kategorija[delez>5 & delez<10] <- "5-10 %"
-kategorija[delez>10] <- "več kot 10 %"
+kategorija[delez>10] <- ">10 %"
 kategorija <- factor(kategorija, levels=urejene.velikosti,
                      ordered=TRUE)
 Prosnje2015$Delez<-kategorija
@@ -79,11 +79,12 @@ cetrtletja <- c("Q1","Q2","Q3")
 st.azilantov <- as.numeric(apply(Prosnje2015[,cetrtletja],
                       1, function (x) sum(x,na.rm=TRUE)))
 azilantov.na.milijon <- round((1000000*st.azilantov)/st.prebivalcev)
-Prosnje2015$Azilanti_na_milijon <- azilantov.na.milijon
-return(Prosnje2015)
+Prosnje2015$ApM <- azilantov.na.milijon
+ObjavaProsnje2015 <- head(Prosnje2015[,seq(-1,-11,-1)])
+return(ObjavaProsnje2015)
 }
 
-Prosnje2015<-uvoz.Prosnje2015()
+ObjavaProsnje2015<-uvoz.Prosnje2015()
 message("Uvažam podatke prosilcev za azil v letu 2015...\n")
 
 
@@ -197,26 +198,29 @@ message("Uvažam podatke starosti azilantov...\n")
    Origin <- Origin[prihodV.EU,]
    rownames(Origin)<-NULL
    #nova tabela
-   meseci <- paste0("2015M",1:11)
+   meseci <- factor(paste0("2015M",1:11),levels=paste0("2015M",1:11),ordered = TRUE)
    albanija <- Origin[prihod.Albanija,]["Value"]
-   albanija <- albanija[!is.na(albanija)]
+   albanija <- as.numeric(gsub(" ","",albanija[!is.na(albanija)]))
    kosovo <- Origin[prihod.Kosovo,]["Value"]
-   kosovo <- kosovo[!is.na(kosovo)]
+   kosovo <- as.numeric(gsub(" ","",kosovo[!is.na(kosovo)]))
    srbija <- Origin[prihod.Srbija,]["Value"]
-   srbija <-srbija[!is.na(srbija)]
+   srbija <-as.numeric(gsub(" ","",srbija[!is.na(srbija)]))
    sirija <- Origin[prihod.Sirija,]["Value"]
-   sirija <- sirija[!is.na(sirija)]
+   sirija <- as.numeric(gsub(" ","",sirija[!is.na(sirija)]))
    afganistan <- Origin[prihod.Afganistan,]["Value"]
-   afganistan <- afganistan[!is.na(afganistan)]
+   afganistan <- as.numeric(gsub(" ","",afganistan[!is.na(afganistan)]))
    irak <- Origin[prihod.Irak,]["Value"]
-   irak <- irak[!is.na(irak)]
+   irak <- as.numeric(gsub(" ","",irak[!is.na(irak)]))
    eritreja <- Origin[prihod.Eritreja,]["Value"]
-   eritreja <- eritreja[!is.na(eritreja)]
+   eritreja <- as.numeric(gsub(" ","",eritreja[!is.na(eritreja)]))
    Origin <- data.frame(meseci,sirija,irak,afganistan,eritreja,
                         kosovo,albanija,srbija)
  }
  Origin <- uvoz.Origin()
  message("Uvažam podatke o državljanstvu azilantov...\n")
 
-
+#GRAFI
+ library(ggplot2)
+ graf_Origin<-ggplot(Origin, aes(x=meseci, y=sirija,group=1)) + geom_line()+
+   ggtitle("Migracije Sirijcev")  
 
