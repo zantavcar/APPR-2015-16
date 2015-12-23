@@ -215,12 +215,13 @@ message("Uvažam podatke starosti azilantov...\n")
    eritreja <- as.numeric(gsub(" ","",eritreja[!is.na(eritreja)]))
    Origin <- data.frame(meseci,sirija,irak,afganistan,eritreja,
                         kosovo,albanija,srbija)
+   colnames(Origin)<-c("Meseci","Sirija","Irak","Afganistan","Eritreja","Kosovo","Albanija","Srbija")
+   return(Origin)
  }
  Origin <- uvoz.Origin()
  message("Uvažam podatke o državljanstvu azilantov...\n")
 
 #GRAFI
  library(ggplot2)
- graf_Origin<-ggplot(Origin, aes(x=meseci, y=sirija,group=1)) + geom_line()+
-   ggtitle("Migracije Sirijcev")  
+
 

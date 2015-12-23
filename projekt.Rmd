@@ -10,7 +10,7 @@ output:
   word_document: default
 ---
 
-```{r setup, echo=FALSE, results='hide', message=FALSE}
+```{r setup, echo=FALSE, results='hide', message=FALSE,warning=FALSE}
 # Če želimo nastaviti pisave v PDF-ju, odkomentiramo
 # in sledimo navodilom v programu.
 #
@@ -30,7 +30,7 @@ Analiziral bom prošnje za azil v letošnjem letu v državah EU, skušal bom ugo
 
 ## Odsev migrantske krize v državah članicah EU
 
-```{r uvoz, echo=FALSE,message=FALSE}
+```{r uvoz, echo=FALSE,message=FALSE,warning=FALSE}
 source("uvoz/uvoz.r", encoding = "UTF-8")
 ```
 
@@ -40,7 +40,7 @@ Tabela Prosnje2015 prikazuje število vseh prošenj za azil v vseh državah čla
 
 
 ```{r,echo=FALSE,message=FALSE}
-ObjavaProsnje2015
+kable(ObjavaProsnje2015)
 ```
 
 Za prva tri četrtletja je na Eurostatu objavljen podatek rezultatov prošenj za azil. Prosilci lahko pridobijo naslednje statuse:
@@ -49,14 +49,13 @@ Za prva tri četrtletja je na Eurostatu objavljen podatek rezultatov prošenj za
 Posebej zanimivo bo videti, če bo procent odobrenih prošenj za azil v četrtem četrtletju zaradi napada v Parizu padel.
 
 ```{r,echo=FALSE,message=FALSE}
-Odlocitve2015
+kable(Odlocitve2015)
 ```
 
 ## Starostna, spolna in narodnostna sestava azilantov
 Poleg analize evropskih držav in njihovega delovanja v migrantski krizi, sem se odločil, da analiziram še prosilce za azil. Ločeno sem obravnaval njihovo starost, (opazimo da prevladujejo osebe med 18 in 34 letom starosti), spolu (moških je kar štirikrat toliko kot žensk!) ter državljanstvo, pričakovano je največ Sirijcev, sledijo Afganistanci in Iračani. Pri analizah o spolu in starosti sem obravlaval le države iz katerih je naval največji - to so Sirija, Afganistan, Irak, Eritreja, Albanija, Kosovo in Srbija. Spodaj je v grafu prikazana dinamika migracij iz Sirije.
-
 ```{r,echo=FALSE,message=FALSE}
-graf_Origin
+kable(Origin)
 ```
 
 
