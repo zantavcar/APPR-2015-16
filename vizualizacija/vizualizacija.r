@@ -11,3 +11,5 @@ druzine <- preuredi(druzine, zemljevid, "OB_UIME", c("Ankaran", "Mirna"))
 druzine$povprecje <- apply(druzine[1:4], 1, function(x) sum(x*(1:4))/sum(x))
 min.povprecje <- min(druzine$povprecje, na.rm=TRUE)
 max.povprecje <- max(druzine$povprecje, na.rm=TRUE)
+
+
