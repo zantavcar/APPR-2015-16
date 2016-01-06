@@ -1,25 +1,26 @@
 
 #2. FAZA
 
-#1.tabela - proönje azilantov v letu 2015
-
+#1.tabela - prošnje azilantov v letu 2015
 uvoz.Prosnje2015 <- function() {
   Prosnje2015 <- read.csv2("podatki/Prosnje2015.csv",sep=",",
                            na.strings=":",
                            as.is=TRUE,
                            fileEncoding="UTF-8")
   
-  #Precistil bom nepotreben stolpec s podatki iz leta 2014
   tidy_Prosnje2015 <- Prosnje2015[,c(-3,-4,-5,-7)]
+  tidy_Prosnje2015[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
+                                     tidy_Prosnje2015[,"GEO"],fixed=TRUE)
+  tidy_Prosnje2015[,"GEO"] <- gsub("European Union (28 countries)","European Union",
+                                     tidy_Prosnje2015[,"GEO"],fixed=TRUE)
+  tidy_Prosnje2015[,"Value"] <-as.numeric(gsub(" ","",tidy_Prosnje2015[,"Value"],fixed=TRUE))
   return(tidy_Prosnje2015)
 }
 
 tidy_Prosnje2015<-uvoz.Prosnje2015()
 message("Uvažam podatke prosilcev za azil v letu 2015...\n")
 
-#2. tabela - uvoz rezultatov proöenj za azil v letu 2015. Opis, kaj doloËene
-#odloËitve pomenijo bo v zakljuËnem poroËilu. Namen te tabele je, primerjanje
-#odloËitev skozi Ëas
+#2. tabela - uvoz rezultatov prošenj za azil v letu 2015. 
 uvoz.Odlocitve2015 <- function() {
   Odlocitve2015 <- read.csv2("podatki/Odlocitve2015.csv",
                              na.strings=":",
@@ -30,53 +31,37 @@ uvoz.Odlocitve2015 <- function() {
                                      tidy_Odlocitve2015[,"GEO"],fixed=TRUE)
   tidy_Odlocitve2015[,"GEO"] <- gsub("European Union (28 countries)","European Union",
                                      tidy_Odlocitve2015[,"GEO"],fixed=TRUE)
-  EU <- grepl("^Euro",Odlocitve2015[,"GEO"])
-  GER <- grepl("^Ger",Odlocitve2015[,"GEO"])
-  objavaEU_odlocitve2015 <- tidy_Odlocitve2015[EU,]
-  objavaGER_odlocitve2015 <- tidy_Odlocitve2015[GER,]
-  cetrtletja <- c("2015Q1","2015Q2","2015Q3")
-  #LogiËni vektorji za odloËitve o azilantih
-  Positive <- grepl("Total positive decisions",Odlocitve2015[,"DECISION"])
-  Geneva <- grepl("^Geneva",Odlocitve2015[,"DECISION"])
-  Humanitarian <- grepl("^Human",Odlocitve2015[,"DECISION"])
-  Negative <- grepl("^Reje",Odlocitve2015[,"DECISION"])
-  Total <- grepl("^Total$",Odlocitve2015[,"DECISION"])
-  #nova tabela -> odlocitve po cetrtletjih v EU ter v NemËiji
-  positive <- objavaEU_odlocitve2015[Positive,"Value"]
-  geneva <- objavaEU_odlocitve2015[Geneva,"Value"]
-  humanitarian <- objavaEU_odlocitve2015[Humanitarian,"Value"]
-  negative <- objavaEU_odlocitve2015[Negative,"Value"]
-  total <- objavaEU_odlocitve2015[Total,"Value"]
+  tidy_Odlocitve2015[,"Value"] <-as.numeric(gsub(" ","",tidy_Odlocitve2015[,"Value"],fixed=TRUE))
   return(tidy_Odlocitve2015)
 }
 
 tidy_Odlocitve2015 <- uvoz.Odlocitve2015()
 message("Uvažam podatke o odločitvah...\n")
 
-#4. tabela - poglobljena tabela prosilcev za azil (SPOL)
+#3. tabela - poglobljena tabela prosilcev za azil (SPOL)
 
 uvoz.Spol <- function() {
   Spol <- read.csv2("podatki/Spol.csv",
                     na.strings=":",
                     fileEncoding = "UTF-8",
                     sep = ",")
-  
-  prihodV.EU <- grepl("^Euro",Spol[,"GEO"])
-  #LOGI»NI VEKTORJI - SPOL AZILANTOV
+  #LOGIČNI VEKTORJI - SPOL AZILANTOV
   
   Moski <- grepl("Male",Spol[,"SEX"])
   Zenske <- grepl("Female",Spol[,"SEX"])
   tidy_Spol <- Spol[,c(-3,-5,-6,-7)]
+  
   tidy_Spol[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
                             tidy_Spol[,"GEO"],fixed=TRUE)
   tidy_Spol[,"GEO"] <- gsub("European Union (28 countries)","European Union",
                             tidy_Spol[,"GEO"],fixed=TRUE)
+  tidy_Spol[,"Value"] <-as.numeric(gsub(" ","",tidy_Spol[,"Value"],fixed=TRUE))
   return(tidy_Spol)
 }
 tidy_Spol <- uvoz.Spol()
 message("Uvažam podatke o spolu azilantov...\n")
 
-#5. tabela - poglobljena analiza prosilcev za azil (STAROST)
+#4. tabela - poglobljena analiza prosilcev za azil (STAROST)
 uvoz.Starost <- function () {
   Starost <- read.csv2("podatki/Starost.csv",
                        na.strings=":",
@@ -89,6 +74,8 @@ uvoz.Starost <- function () {
   tidy_Starost[,"GEO"] <- gsub("European Union (28 countries)","European Union",
                                tidy_Starost[,"GEO"],fixed=TRUE)
   tidy_Starost <- tidy_Starost[c(1:1485),]
+  tidy_Starost[,"Value"] <-as.numeric(gsub(" ","",tidy_Starost[,"Value"],fixed=TRUE))
+  
   #Logicni vektorji (STAROST)
   pod18 <- grepl("^Less",tidy_Starost[,"AGE"])
   odrasli_mlajsi <-grepl("^From 18",tidy_Starost[,"AGE"])
@@ -99,7 +86,7 @@ uvoz.Starost <- function () {
 tidy_Starost <- uvoz.Starost()
 message("Uvažam podatke starosti azilantov...\n")
 
-#6. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
+#5. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
 uvoz.Origin <- function () {
   Origin <- read.csv2("podatki/Origin.csv",
                       na.strings = ":",
@@ -115,8 +102,9 @@ uvoz.Origin <- function () {
   tidy_Origin[,"CITIZEN"] <-gsub("Kosovo (under United Nations Security Council Resolution 1244/99)",
                                  "Kosovo",tidy_Origin[,"CITIZEN"],fixed=TRUE)
   tidy_Origin <- tidy_Origin[c(1:2142),]
+  tidy_Origin[,"Value"] <-as.numeric(gsub(" ","",tidy_Origin[,"Value"],fixed=TRUE))
   rownames(tidy_Origin) <- NULL
-  #logiËni vektorji za drûave
+  #logični vektorji za drûave
   prihod.Albanija <- grepl("^Alb",tidy_Origin[,"CITIZEN"])
   prihod.Kosovo <- grepl("^Kos",tidy_Origin[,"CITIZEN"])
   prihod.Srbija <- grepl("^Ser",tidy_Origin[,"CITIZEN"])
@@ -148,6 +136,18 @@ uvoz.Origin <- function () {
 tidy_Origin <- uvoz.Origin()
 message("Uvažam podatke o drûavljanstvu azilantov...\n")
 
+#ZA OBJAVO
+objava_Prosnje <- head(tidy_Prosnje2015)
+objava_Starost <- head(tidy_Starost)
+objava_Odlovitve <- tidy_Odlocitve2015[c(1:5),]
 
-
-
+#GRAFI
+require(dplyr)
+require(ggplot2)
+attach(tidy_Prosnje2015)
+Prosnje_EU <- tidy_Prosnje2015[GEO=="European Union" & ASYL_APP=="Asylum applicant",]
+detach(tidy_Prosnje2015)
+graf<-ggplot(Prosnje_EU,aes(TIME,Value)) + geom_line(colour="red")+
+  ggtitle("Število prošenj v državah EU")+xlab("Meseci")+ylab("Število prošenj")
+  theme(plot.title = element_text(lineheight=.8, face="bold"),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) 
+    
