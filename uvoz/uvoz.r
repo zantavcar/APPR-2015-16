@@ -134,20 +134,35 @@ uvoz.Origin <- function () {
   return(tidy_Origin)
 }
 tidy_Origin <- uvoz.Origin()
-message("Uvažam podatke o drûavljanstvu azilantov...\n")
+message("Uvažam podatke o državljanstvu azilantov...\n")
 
 #ZA OBJAVO
 objava_Prosnje <- head(tidy_Prosnje2015)
 objava_Starost <- head(tidy_Starost)
 objava_Odlovitve <- tidy_Odlocitve2015[c(1:5),]
+#UVOZ TABELE O PREBIVALSTVU V DRŽAVAH 
+require("rvest")
+url <- "https://en.wikipedia.org/wiki/Area_and_population_of_European_countries"
+population <- url %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/table[2]') %>%
+  html_table()
+prebivalstvo.EU <- do.call(rbind.data.frame, population)
+prebivalstvo.EU <- prebivalstvo.EU[,c(-2,-3)]
+colnames(prebivalstvo.EU) <- c("drzava","prebivalstvo")
+prebivalstvo.EU[,"drzava"] <- gsub(",","",prebivalstvo.EU[,"drzava"])
+
+
+
 
 #GRAFI
 require(dplyr)
 require(ggplot2)
-attach(tidy_Prosnje2015)
-Prosnje_EU <- tidy_Prosnje2015[GEO=="European Union" & ASYL_APP=="Asylum applicant",]
-detach(tidy_Prosnje2015)
-graf<-ggplot(Prosnje_EU,aes(TIME,Value)) + geom_line(colour="red")+
-  ggtitle("Število prošenj v državah EU")+xlab("Meseci")+ylab("Število prošenj")
-  theme(plot.title = element_text(lineheight=.8, face="bold"),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) 
+
+graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
+                                         GEO %in% c("Germany","Hungary","United Kingdom",
+                                                    "Austria", "Sweden", "Italy", "France")),
+             aes(x = TIME, y = Value, group = GEO, color = GEO)) + geom_line()
+ 
     
+
