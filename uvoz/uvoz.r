@@ -150,13 +150,51 @@ population <- url %>%
 prebivalstvo.EU <- do.call(rbind.data.frame, population)
 prebivalstvo.EU <- prebivalstvo.EU[,c(-2,-3)]
 colnames(prebivalstvo.EU) <- c("drzava","prebivalstvo")
-prebivalstvo.EU[,"drzava"] <- gsub(",","",prebivalstvo.EU[,"drzava"])
+prebivalstvo.EU[,"prebivalstvo"] <- as.numeric(gsub(',',"",prebivalstvo.EU[,"prebivalstvo"],fixed = FALSE))
 
+#NOVA TABELA ZA PREDSTAVITEV - VIZUALIZACIJA
 
+tidy_Prosnje2015 <- tidy_Prosnje2015 %>%
+  mutate(MONTH = TIME %>% strapplyc("M([0-9]+)") %>% as.numeric())
 
+Q1 <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant", MONTH <= 3) %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value))
 
+Q2 <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant", (MONTH <=6 & MONTH >3)) %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value))
+
+Q3 <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant", (MONTH >6 & MONTH <= 9)) %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value))
+
+tabela_Prosnje <- inner_join(Q1,Q2,by="GEO")
+tabela_Prosnje <- right_join(tabela_Prosnje,Q3,by="GEO")
+colnames(tabela_Prosnje) <- c("GEO","Q1","Q2","Q3")
+sprememba1 <- round((tabela_Prosnje[,"Q2"]-tabela_Prosnje[,"Q1"])/tabela_Prosnje[,"Q1"],digits=4)*100
+sprememba2 <- round ((tabela_Prosnje[,"Q3"]-tabela_Prosnje[,"Q2"])/tabela_Prosnje[,"Q2"],digits=4)*100
+sprememba1 <- paste0(sprememba1[,1]," %")
+sprememba2 <- paste0(sprememba2[,1]," %")
+tabela_Prosnje$"Q1.Q2(%)" <- sprememba1
+tabela_Prosnje$"Q2.Q3(%)" <- sprememba2
+
+#TABELA ZA OBJAVO
+
+objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
+                                                              "United Kingdom","Austria", "Sweden", 
+                                                              "Italy", "France","Slovenia"))
+#PRIPRAVA TABELE ZA UVOZ
+total <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant",(MONTH >= 1 & MONTH <=9)) %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value))
+
+povprecja <- inner_join(total, prebivalstvo.EU,
+                        by = c("GEO" = "drzava")) %>%
+  mutate(prosnje.na.milijon = round((1000000*applicants)/prebivalstvo))
 #GRAFI
 require(dplyr)
+require(gsubfn)
 require(ggplot2)
 
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
