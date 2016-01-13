@@ -1,6 +1,13 @@
 
 #2. FAZA
 
+require(dplyr)
+require(gsubfn)
+require(ggplot2)
+require(maptools)
+require(sp)
+
+
 #1.tabela - prošnje azilantov v letu 2015
 uvoz.Prosnje2015 <- function() {
   Prosnje2015 <- read.csv2("podatki/Prosnje2015.csv",sep=",",
@@ -153,7 +160,6 @@ colnames(prebivalstvo.EU) <- c("drzava","prebivalstvo")
 prebivalstvo.EU[,"prebivalstvo"] <- as.numeric(gsub(',',"",prebivalstvo.EU[,"prebivalstvo"],fixed = FALSE))
 
 #NOVA TABELA ZA PREDSTAVITEV - VIZUALIZACIJA
-
 tidy_Prosnje2015 <- tidy_Prosnje2015 %>%
   mutate(MONTH = TIME %>% strapplyc("M([0-9]+)") %>% as.numeric())
 
@@ -189,13 +195,11 @@ total <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant",(MONTH >= 1 & MONTH <=9)) %>%
   group_by(GEO) %>% summarise(applicants = sum(Value))
 
-povprecja <- inner_join(total, prebivalstvo.EU,
+objava_tabela_Prosnje <- inner_join(total, prebivalstvo.EU,
                         by = c("GEO" = "drzava")) %>%
   mutate(prosnje.na.milijon = round((1000000*applicants)/prebivalstvo))
 #GRAFI
-require(dplyr)
-require(gsubfn)
-require(ggplot2)
+
 
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                          GEO %in% c("Germany","Hungary","United Kingdom",
@@ -203,4 +207,27 @@ graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
              aes(x = TIME, y = Value, group = GEO, color = GEO)) + geom_line()
  
     
+#ZEMLJEVID 
 
+#ZEMLJEVID
+source("lib/uvozi.zemljevid.r", encoding = "UTF-8")
+
+
+pretvori.zemljevid <- function(zemljevid, pogoj = TRUE) {
+  fo <- fortify(zemljevid[pogoj,])
+  data <- zemljevid@data
+  data$id <- as.character(0:(nrow(data)-1))
+  return(inner_join(fo, data, by="id"))
+}
+
+svet <- uvozi.zemljevid("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_0_countries.zip",
+                        "ne_110m_admin_0_countries")
+m <- match(svet$name_long, total$GEO)
+svet$applicants <- total$applicants[m] 
+eu <- pretvori.zemljevid(svet, svet$continent == "Europe")
+map1 <- ggplot() +
+  geom_polygon(data = eu,
+               aes(x = long, y = lat, group = group, fill = applicants)) +
+  xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
+            
+print(map1)
