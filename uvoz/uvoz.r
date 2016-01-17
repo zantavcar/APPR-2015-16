@@ -52,10 +52,7 @@ uvoz.Spol <- function() {
                     na.strings=":",
                     fileEncoding = "UTF-8",
                     sep = ",")
-  #LOGIČNI VEKTORJI - SPOL AZILANTOV
-  
-  Moski <- grepl("Male",Spol[,"SEX"])
-  Zenske <- grepl("Female",Spol[,"SEX"])
+
   tidy_Spol <- Spol[,c(-3,-5,-6,-7)]
   
   tidy_Spol[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
@@ -74,7 +71,6 @@ uvoz.Starost <- function () {
                        na.strings=":",
                        fileEncoding = "UTF-8",
                        sep = ",")
-  prihodV.EU <- grepl("^Euro",Starost[,"GEO"])
   tidy_Starost <- Starost[,c(-3,-4,-6,-7)]
   tidy_Starost[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
                                tidy_Starost[,"GEO"],fixed=TRUE)
@@ -82,12 +78,7 @@ uvoz.Starost <- function () {
                                tidy_Starost[,"GEO"],fixed=TRUE)
   tidy_Starost <- tidy_Starost[c(1:1485),]
   tidy_Starost[,"Value"] <-as.numeric(gsub(" ","",tidy_Starost[,"Value"],fixed=TRUE))
-  
-  #Logicni vektorji (STAROST)
-  pod18 <- grepl("^Less",tidy_Starost[,"AGE"])
-  odrasli_mlajsi <-grepl("^From 18",tidy_Starost[,"AGE"])
-  odrasli_starejsi <- grepl("^From 35",tidy_Starost[,"AGE"])
-  nad65 <- grepl("^65",tidy_Starost[,"AGE"])
+
   return(tidy_Starost)
 }
 tidy_Starost <- uvoz.Starost()
@@ -111,42 +102,17 @@ uvoz.Origin <- function () {
   tidy_Origin <- tidy_Origin[c(1:2142),]
   tidy_Origin[,"Value"] <-as.numeric(gsub(" ","",tidy_Origin[,"Value"],fixed=TRUE))
   rownames(tidy_Origin) <- NULL
-  #logični vektorji za drûave
-  prihod.Albanija <- grepl("^Alb",tidy_Origin[,"CITIZEN"])
-  prihod.Kosovo <- grepl("^Kos",tidy_Origin[,"CITIZEN"])
-  prihod.Srbija <- grepl("^Ser",tidy_Origin[,"CITIZEN"])
-  prihod.Afganistan <- grepl("^Afg",tidy_Origin[,"CITIZEN"])
-  prihod.Sirija <- grepl("^Syr",tidy_Origin[,"CITIZEN"])
-  prihod.Eritreja <- grepl("^Eri",tidy_Origin[,"CITIZEN"])
-  prihod.Irak <- grepl("^Ira",tidy_Origin[,"CITIZEN"])
-  
-  prihodV.EU <- grepl("^Euro",Origin[,"GEO"])
-  tidy_OriginEU <- Origin[prihodV.EU,]
-  #nova tabela
-  meseci <- factor(paste0("2015M",1:11),levels=paste0("2015M",1:9),ordered = TRUE)
-  albanija <- Origin[prihod.Albanija,]["Value"]
-  albanija <- as.numeric(gsub(" ","",albanija[!is.na(albanija)]))
-  kosovo <- Origin[prihod.Kosovo,]["Value"]
-  kosovo <- as.numeric(gsub(" ","",kosovo[!is.na(kosovo)]))
-  srbija <- Origin[prihod.Srbija,]["Value"]
-  srbija <-as.numeric(gsub(" ","",srbija[!is.na(srbija)]))
-  sirija <- Origin[prihod.Sirija,]["Value"]
-  sirija <- as.numeric(gsub(" ","",sirija[!is.na(sirija)]))
-  afganistan <- Origin[prihod.Afganistan,]["Value"]
-  afganistan <- as.numeric(gsub(" ","",afganistan[!is.na(afganistan)]))
-  irak <- Origin[prihod.Irak,]["Value"]
-  irak <- as.numeric(gsub(" ","",irak[!is.na(irak)]))
-  eritreja <- Origin[prihod.Eritreja,]["Value"]
-  eritreja <- as.numeric(gsub(" ","",eritreja[!is.na(eritreja)]))
+
   return(tidy_Origin)
 }
 tidy_Origin <- uvoz.Origin()
 message("Uvažam podatke o državljanstvu azilantov...\n")
 
 #ZA OBJAVO
-objava_Prosnje <- head(tidy_Prosnje2015)
-objava_Starost <- head(tidy_Starost)
-objava_Odlovitve <- tidy_Odlocitve2015[c(1:5),]
+objava_Prosnje <- tidy_Prosnje2015 %>% filter(GEO %in% c("European Union","Germany",
+                                                     "Hungary","Sweden","Slovenia") &
+                                            TIME %in% c("2015M01"))
+
 #UVOZ TABELE O PREBIVALSTVU V DRŽAVAH 
 require("rvest")
 url <- "https://en.wikipedia.org/wiki/Area_and_population_of_European_countries"
@@ -186,11 +152,15 @@ tabela_Prosnje$"Q1.Q2(%)" <- sprememba1
 tabela_Prosnje$"Q2.Q3(%)" <- sprememba2
 
 #TABELA ZA OBJAVO
+tabela1 <-tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
+                                                                  "United Kingdom","Austria", "Sweden", 
+                                                                  "Italy", "France","Slovenia"))
 
+#PRIPRAVA TABELE ZA UVOZ
 objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
                                                               "United Kingdom","Austria", "Sweden", 
                                                               "Italy", "France","Slovenia"))
-#PRIPRAVA TABELE ZA UVOZ
+
 total <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant",(MONTH >= 1 & MONTH <=9)) %>%
   group_by(GEO) %>% summarise(applicants = sum(Value))
@@ -199,15 +169,10 @@ objava_tabela_Prosnje <- inner_join(total, prebivalstvo.EU,
                         by = c("GEO" = "drzava")) %>%
   mutate(prosnje.na.milijon = round((1000000*applicants)/prebivalstvo))
 #GRAFI
-
-
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                          GEO %in% c("Germany","Hungary","United Kingdom",
                                                     "Austria", "Sweden", "Italy", "France")),
-             aes(x = TIME, y = Value, group = GEO, color = GEO)) + geom_line()
- 
-    
-#ZEMLJEVID 
+             aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()
 
 #ZEMLJEVID
 source("lib/uvozi.zemljevid.r", encoding = "UTF-8")
@@ -230,4 +195,3 @@ map1 <- ggplot() +
                aes(x = long, y = lat, group = group, fill = applicants)) +
   xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
             
-print(map1)
