@@ -76,7 +76,6 @@ uvoz.Starost <- function () {
                                tidy_Starost[,"GEO"],fixed=TRUE)
   tidy_Starost[,"GEO"] <- gsub("European Union (28 countries)","European Union",
                                tidy_Starost[,"GEO"],fixed=TRUE)
-  tidy_Starost <- tidy_Starost[c(1:1485),]
   tidy_Starost[,"Value"] <-as.numeric(gsub(" ","",tidy_Starost[,"Value"],fixed=TRUE))
 
   return(tidy_Starost)
@@ -140,16 +139,21 @@ Q2 <- tidy_Prosnje2015 %>%
 Q3 <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant", (MONTH >6 & MONTH <= 9)) %>%
   group_by(GEO) %>% summarise(applicants = sum(Value))
+Q4 <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant", (MONTH > 9)) %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value))
 
 tabela_Prosnje <- inner_join(Q1,Q2,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q3,by="GEO")
-colnames(tabela_Prosnje) <- c("GEO","Q1","Q2","Q3")
+tabela_Prosnje <- right_join(tabela_Prosnje,Q4,by="GEO")
+colnames(tabela_Prosnje) <- c("GEO","Q1","Q2","Q3","Q4")
 sprememba1 <- round((tabela_Prosnje[,"Q2"]-tabela_Prosnje[,"Q1"])/tabela_Prosnje[,"Q1"],digits=4)*100
 sprememba2 <- round ((tabela_Prosnje[,"Q3"]-tabela_Prosnje[,"Q2"])/tabela_Prosnje[,"Q2"],digits=4)*100
 sprememba1 <- paste0(sprememba1[,1]," %")
 sprememba2 <- paste0(sprememba2[,1]," %")
 tabela_Prosnje$"Q1.Q2(%)" <- sprememba1
 tabela_Prosnje$"Q2.Q3(%)" <- sprememba2
+
 
 #TABELA ZA OBJAVO
 tabela1 <-tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
@@ -174,6 +178,7 @@ graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                                     "Austria", "Sweden", "Italy", "France")),
              aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()
 
+countries <- as.vector(tabela_Prosnje$GEO)
 #ZEMLJEVID
 source("lib/uvozi.zemljevid.r", encoding = "UTF-8")
 
@@ -195,3 +200,5 @@ map1 <- ggplot() +
                aes(x = long, y = lat, group = group, fill = applicants)) +
   xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
             
+#PREDIKCIJSKI MODEL
+
