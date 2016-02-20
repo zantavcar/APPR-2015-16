@@ -71,7 +71,7 @@ uvoz.Starost <- function () {
                        na.strings=":",
                        fileEncoding = "UTF-8",
                        sep = ",")
-  tidy_Starost <- Starost[,c(-3,-4,-6,-7)]
+  tidy_Starost <- Starost[,c(-3,-4,-7)]
   tidy_Starost[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
                                tidy_Starost[,"GEO"],fixed=TRUE)
   tidy_Starost[,"GEO"] <- gsub("European Union (28 countries)","European Union",
@@ -143,22 +143,18 @@ Q4 <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant", (MONTH > 9)) %>%
   group_by(GEO) %>% summarise(applicants = sum(Value))
 
+
+
 tabela_Prosnje <- inner_join(Q1,Q2,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q3,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q4,by="GEO")
 colnames(tabela_Prosnje) <- c("GEO","Q1","Q2","Q3","Q4")
 sprememba1 <- round((tabela_Prosnje[,"Q2"]-tabela_Prosnje[,"Q1"])/tabela_Prosnje[,"Q1"],digits=4)*100
 sprememba2 <- round ((tabela_Prosnje[,"Q3"]-tabela_Prosnje[,"Q2"])/tabela_Prosnje[,"Q2"],digits=4)*100
+sprememba3 <- round((tabela_Prosnje[,"Q4"]-tabela_Prosnje[,"Q3"])/tabela_Prosnje[,"Q3"],digits=4)*100
 sprememba1 <- paste0(sprememba1[,1]," %")
 sprememba2 <- paste0(sprememba2[,1]," %")
-tabela_Prosnje$"Q1.Q2(%)" <- sprememba1
-tabela_Prosnje$"Q2.Q3(%)" <- sprememba2
-
-
-#TABELA ZA OBJAVO
-tabela1 <-tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
-                                                                  "United Kingdom","Austria", "Sweden", 
-                                                                  "Italy", "France","Slovenia"))
+sprememba3 <- paste0(sprememba3[,1]," %")
 
 #PRIPRAVA TABELE ZA UVOZ
 objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
@@ -166,19 +162,20 @@ objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","
                                                               "Italy", "France","Slovenia"))
 
 total <- tidy_Prosnje2015 %>%
-  filter(ASYL_APP == "Asylum applicant",(MONTH >= 1 & MONTH <=9)) %>%
-  group_by(GEO) %>% summarise(applicants = sum(Value))
+  filter(ASYL_APP == "Asylum applicant") %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value,na.rm=TRUE))
 
 objava_tabela_Prosnje <- inner_join(total, prebivalstvo.EU,
                         by = c("GEO" = "drzava")) %>%
   mutate(prosnje.na.milijon = round((1000000*applicants)/prebivalstvo))
-#GRAFI
+#GRAFI - dinamika prošenj
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                          GEO %in% c("Germany","Hungary","United Kingdom",
                                                     "Austria", "Sweden", "Italy", "France")),
              aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()
 
 countries <- as.vector(tabela_Prosnje$GEO)
+
 #ZEMLJEVID
 source("lib/uvozi.zemljevid.r", encoding = "UTF-8")
 
@@ -199,6 +196,34 @@ map1 <- ggplot() +
   geom_polygon(data = eu,
                aes(x = long, y = lat, group = group, fill = applicants)) +
   xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
+
+#TORTNI - Moški, Ženkse
+moski <- tidy_Spol %>%
+  filter(SEX == "Males") %>%
+  group_by(GEO) %>% summarise(Males = sum(Value,na.rm = TRUE))
+zenske <- tidy_Spol %>%
+  filter(SEX == "Females") %>%
+  group_by(GEO) %>% summarise (Females = sum(Value, na.rm = TRUE))
+spol <- inner_join(moski,zenske,by = "GEO")
+
+spol_graf <- 
+  pie(as.numeric(select(spol %>% filter(GEO %in% c("Slovenia")),c(2,3))),
+      label=c(paste0("Males \n",select(spol %>% filter(GEO %in% c("Slovenia")),c(2))),
+              paste0("Females \n",select(spol %>% filter(GEO %in% c("Slovenia")),c(3)))),
+      col=c("lightblue","pink"),
+      main=paste0("Sex of asylum seekers in ","Slovenia"))
+
+#STOLPČNI - Starost
+starost <- tidy_Starost %>%
+  filter(ASYL_APP == "Asylum applicant") %>%
+  group_by(GEO,AGE) %>% summarise(applicants = sum(Value,na.rm=TRUE))
+
+starost_graf <- ggplot(starost %>% filter(GEO %in% c("Germany","Austria"))) + 
+  aes(x=AGE,y=applicants,fill=GEO,color=GEO)+ 
+  geom_bar(stat="identity",position=position_dodge())+ 
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+  ggtitle(paste0("Age of asylum seekers in ","Slovenia"))
+                
             
 #PREDIKCIJSKI MODEL
 
