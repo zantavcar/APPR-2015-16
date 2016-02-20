@@ -143,18 +143,18 @@ Q4 <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant", (MONTH > 9)) %>%
   group_by(GEO) %>% summarise(applicants = sum(Value))
 
+Total <- tidy_Prosnje2015 %>%
+  filter(ASYL_APP == "Asylum applicant") %>%
+  group_by(GEO) %>% summarise(applicants = sum(Value,na.rm= TRUE))
 
 
 tabela_Prosnje <- inner_join(Q1,Q2,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q3,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q4,by="GEO")
-colnames(tabela_Prosnje) <- c("GEO","Q1","Q2","Q3","Q4")
-sprememba1 <- round((tabela_Prosnje[,"Q2"]-tabela_Prosnje[,"Q1"])/tabela_Prosnje[,"Q1"],digits=4)*100
-sprememba2 <- round ((tabela_Prosnje[,"Q3"]-tabela_Prosnje[,"Q2"])/tabela_Prosnje[,"Q2"],digits=4)*100
-sprememba3 <- round((tabela_Prosnje[,"Q4"]-tabela_Prosnje[,"Q3"])/tabela_Prosnje[,"Q3"],digits=4)*100
-sprememba1 <- paste0(sprememba1[,1]," %")
-sprememba2 <- paste0(sprememba2[,1]," %")
-sprememba3 <- paste0(sprememba3[,1]," %")
+tabela_Prosnje <- right_join(tabela_Prosnje,Total,by="GEO")
+colnames(tabela_Prosnje) <- c("GEO","2015Q1","2015Q2","2015Q3","2015Q4","Total")
+
+
 
 #PRIPRAVA TABELE ZA UVOZ
 objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",

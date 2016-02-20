@@ -7,6 +7,7 @@ ui <- fluidPage(
       ),
     mainPanel(
       dataTableOutput("table"),
+      dataTableOutput("sex"),
       plotOutput("plot"),
       plotOutput("age")
     )
@@ -17,6 +18,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   output$table <- renderDataTable({tabela_Prosnje %>% filter(GEO %in% input$countries)})
+  output$sex <- renderDataTable({spol %>% filter(GEO %in% input$countries)})
   output$plot <- renderPlot({ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                                                 GEO %in% input$countries),
                                     aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()+
