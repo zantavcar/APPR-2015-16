@@ -53,7 +53,7 @@ uvoz.Spol <- function() {
                     fileEncoding = "UTF-8",
                     sep = ",")
 
-  tidy_Spol <- Spol[,c(-3,-5,-6,-7)]
+  tidy_Spol <- Spol[,c(-3,-5,-7)]
   
   tidy_Spol[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
                             tidy_Spol[,"GEO"],fixed=TRUE)
@@ -88,19 +88,16 @@ uvoz.Origin <- function () {
   Origin <- read.csv2("podatki/Origin.csv",
                       na.strings = ":",
                       fileEncoding="UTF-8",
-                      sep=",",
-                      nrows=2613)
-  tidy_Origin <- Origin[c(-4,-5,-6,-7,-8)]
+                      sep=",")
+  tidy_Origin <- Origin[c(-4,-5,-7)]
   rownames(Origin) <- NULL
   tidy_Origin[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
                               tidy_Origin[,"GEO"],fixed=TRUE)
   tidy_Origin[,"GEO"] <- gsub("European Union (28 countries)","European Union",
                               tidy_Origin[,"GEO"],fixed=TRUE)
-  tidy_Origin[,"CITIZEN"] <-gsub("Kosovo (under United Nations Security Council Resolution 1244/99)",
-                                 "Kosovo",tidy_Origin[,"CITIZEN"],fixed=TRUE)
-  tidy_Origin <- tidy_Origin[c(1:2142),]
+  tidy_Origin[,"CITIZEN"] <- gsub("European Union (28 countries)","European Union",
+                              tidy_Origin[,"CITIZEN"],fixed=TRUE)
   tidy_Origin[,"Value"] <-as.numeric(gsub(" ","",tidy_Origin[,"Value"],fixed=TRUE))
-  rownames(tidy_Origin) <- NULL
 
   return(tidy_Origin)
 }
@@ -154,9 +151,6 @@ tabela_Prosnje <- right_join(tabela_Prosnje,Q4,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Total,by="GEO")
 colnames(tabela_Prosnje) <- c("GEO","2015Q1","2015Q2","2015Q3","2015Q4","Total")
 
-
-
-#PRIPRAVA TABELE ZA UVOZ
 objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
                                                               "United Kingdom","Austria", "Sweden", 
                                                               "Italy", "France","Slovenia"))
@@ -199,10 +193,10 @@ map1 <- ggplot() +
 
 #TORTNI - Moški, Ženkse
 moski <- tidy_Spol %>%
-  filter(SEX == "Males") %>%
+  filter(SEX == "Males",ASYL_APP == "Asylum applicant") %>%
   group_by(GEO) %>% summarise(Males = sum(Value,na.rm = TRUE))
 zenske <- tidy_Spol %>%
-  filter(SEX == "Females") %>%
+  filter(SEX == "Females",ASYL_APP == "Asylum applicant") %>%
   group_by(GEO) %>% summarise (Females = sum(Value, na.rm = TRUE))
 spol <- inner_join(moski,zenske,by = "GEO")
 
@@ -216,14 +210,27 @@ spol_graf <-
 #STOLPČNI - Starost
 starost <- tidy_Starost %>%
   filter(ASYL_APP == "Asylum applicant") %>%
-  group_by(GEO,AGE) %>% summarise(applicants = sum(Value,na.rm=TRUE))
+  group_by(GEO,AGE) %>% summarise(applicants = sum(Value,na.rm=TRUE)) 
 
-starost_graf <- ggplot(starost %>% filter(GEO %in% c("Germany","Austria"))) + 
+starost_graf <- ggplot(starost %>% filter(GEO %in% c("Slovenia"))) + 
   aes(x=AGE,y=applicants,fill=GEO,color=GEO)+ 
   geom_bar(stat="identity",position=position_dodge())+ 
   theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
   ggtitle(paste0("Age of asylum seekers in ","Slovenia"))
                 
-            
+#STOLPČNI - Origin (SHINY primerjava)
+origin <- tidy_Origin %>%
+  filter(ASYL_APP == "Asylum applicant") %>%
+  group_by(GEO,CITIZEN) %>% summarise(applicants = sum(Value, na.rm=TRUE))
+origin_graf <-
+  ggplot(origin %>% filter(GEO %in% c("Slovenia")),
+  aes(x=CITIZEN,y=applicants,fill=GEO,color=GEO))+ 
+  geom_bar(stat="identity",position=position_dodge())+
+  ggtitle(paste0("Origin of asylum seekers in ","Slovenia"))
+
+#TORTNI - Decisions (SHINY napoved)
+
+
+  
 #PREDIKCIJSKI MODEL
 
