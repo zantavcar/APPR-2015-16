@@ -6,6 +6,7 @@ require(gsubfn)
 require(ggplot2)
 require(maptools)
 require(sp)
+require(mgcv)
 
 
 #1.tabela - prošnje azilantov v letu 2015
@@ -163,6 +164,7 @@ objava_tabela_Prosnje <- inner_join(total, prebivalstvo.EU,
                         by = c("GEO" = "drzava")) %>%
   mutate(prosnje.na.milijon = round((1000000*applicants)/prebivalstvo))
 #GRAFI - dinamika prošenj
+
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                          GEO %in% c("Germany","Hungary","United Kingdom",
                                                     "Austria", "Sweden", "Italy", "France")),
@@ -191,21 +193,16 @@ map1 <- ggplot() +
                aes(x = long, y = lat, group = group, fill = applicants)) +
   xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
 
-#TORTNI - Moški, Ženkse
-moski <- tidy_Spol %>%
-  filter(SEX == "Males",ASYL_APP == "Asylum applicant") %>%
-  group_by(GEO) %>% summarise(Males = sum(Value,na.rm = TRUE))
-zenske <- tidy_Spol %>%
-  filter(SEX == "Females",ASYL_APP == "Asylum applicant") %>%
-  group_by(GEO) %>% summarise (Females = sum(Value, na.rm = TRUE))
-spol <- inner_join(moski,zenske,by = "GEO")
+#STOLPIČNI - Moški, Ženkse
+spol <- tidy_Spol %>%
+  filter(ASYL_APP == "Asylum applicant") %>%
+  group_by(GEO,SEX) %>% summarise(applicants = sum(Value,na.rm = TRUE))
 
-spol_graf <- 
-  pie(as.numeric(select(spol %>% filter(GEO %in% c("Slovenia")),c(2,3))),
-      label=c(paste0("Males \n",select(spol %>% filter(GEO %in% c("Slovenia")),c(2))),
-              paste0("Females \n",select(spol %>% filter(GEO %in% c("Slovenia")),c(3)))),
-      col=c("lightblue","pink"),
-      main=paste0("Sex of asylum seekers in ","Slovenia"))
+spol_graf <- ggplot(spol %>% filter(GEO %in% c("Slovenia"))) + 
+  aes(x=SEX,y=applicants,fill=GEO,color=GEO)+ 
+  geom_bar(stat="identity",position=position_dodge())+ 
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+  ggtitle(paste0("Sex of asylum seekers in ","Slovenia"))
 
 #STOLPČNI - Starost
 starost <- tidy_Starost %>%
@@ -228,9 +225,11 @@ origin_graf <-
   geom_bar(stat="identity",position=position_dodge())+
   ggtitle(paste0("Origin of asylum seekers in ","Slovenia"))
 
-#TORTNI - Decisions (SHINY napoved)
-
-
-  
 #PREDIKCIJSKI MODEL
+faktor1=0.2
+faktor2=0.3
+faktor3=-0.3
+napoved_graf <- ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% c("Slovenia")) %>%
+                         mutate(applicants=Value+faktor1*Value+faktor2*Value+faktor3*Value),
+                       aes(x=TIME,y=applicants,group=GEO,color=GEO))+geom_smooth(method="auto",se=FALSE)
 
