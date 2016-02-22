@@ -7,7 +7,7 @@ require(ggplot2)
 require(maptools)
 require(sp)
 require(mgcv)
-
+options(scipen=999)
 
 #1.tabela - prošnje azilantov v letu 2015
 uvoz.Prosnje2015 <- function() {
@@ -105,12 +105,8 @@ uvoz.Origin <- function () {
 tidy_Origin <- uvoz.Origin()
 message("Uvažam podatke o državljanstvu azilantov...\n")
 
-#ZA OBJAVO
-objava_Prosnje <- tidy_Prosnje2015 %>% filter(GEO %in% c("European Union","Germany",
-                                                     "Hungary","Sweden","Slovenia") &
-                                            TIME %in% c("2015M01"))
+#Uvoz tabele o prebivalstvu v evropskih državah (za zemljevid)
 
-#UVOZ TABELE O PREBIVALSTVU V DRŽAVAH 
 require("rvest")
 url <- "https://en.wikipedia.org/wiki/Area_and_population_of_European_countries"
 population <- url %>%
@@ -121,6 +117,13 @@ prebivalstvo.EU <- do.call(rbind.data.frame, population)
 prebivalstvo.EU <- prebivalstvo.EU[,c(-2,-3)]
 colnames(prebivalstvo.EU) <- c("drzava","prebivalstvo")
 prebivalstvo.EU[,"prebivalstvo"] <- as.numeric(gsub(',',"",prebivalstvo.EU[,"prebivalstvo"],fixed = FALSE))
+
+
+#ZA OBJAVO
+objava_Prosnje <- tidy_Prosnje2015 %>% filter(GEO %in% c("European Union","Germany",
+                                                     "Hungary","Sweden","Slovenia") &
+                                            TIME %in% c("2015M01"))
+
 
 #NOVA TABELA ZA PREDSTAVITEV - VIZUALIZACIJA
 tidy_Prosnje2015 <- tidy_Prosnje2015 %>%
@@ -193,7 +196,9 @@ map1 <- ggplot() +
                aes(x = long, y = lat, group = group, fill = applicants)) +
   xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
 
-#STOLPIČNI - Moški, Ženkse
+#ZA POTREBE SHINY APLIKACIJE
+
+#STOLPIČNI - Spol
 spol <- tidy_Spol %>%
   filter(ASYL_APP == "Asylum applicant") %>%
   group_by(GEO,SEX) %>% summarise(applicants = sum(Value,na.rm = TRUE))
@@ -215,21 +220,30 @@ starost_graf <- ggplot(starost %>% filter(GEO %in% c("Slovenia"))) +
   theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
   ggtitle(paste0("Age of asylum seekers in ","Slovenia"))
                 
-#STOLPČNI - Origin (SHINY primerjava)
+#STOLPČNI - Origin 
 origin <- tidy_Origin %>%
   filter(ASYL_APP == "Asylum applicant") %>%
   group_by(GEO,CITIZEN) %>% summarise(applicants = sum(Value, na.rm=TRUE))
-origin_graf <-
-  ggplot(origin %>% filter(GEO %in% c("Slovenia")),
-  aes(x=CITIZEN,y=applicants,fill=GEO,color=GEO))+ 
-  geom_bar(stat="identity",position=position_dodge())+
-  ggtitle(paste0("Origin of asylum seekers in ","Slovenia"))
+origin_graf <- ggplot(origin %>% filter(GEO %in% c("Slovenia")),
+                      aes(x=factor(1), y=applicants, fill=CITIZEN)) +
+  geom_bar(stat="identity", width=1) + coord_polar(theta="y") +
+  ggtitle(paste0("Origin of asylum seekers in ","Slovenia")) +
+  labs(x="",y="")
 
-#PREDIKCIJSKI MODEL
+#PREDIKCIJSKI MODEL - test, narejen v Shiny
 faktor1=0.2
 faktor2=0.3
 faktor3=-0.3
-napoved_graf <- ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% c("Slovenia")) %>%
-                         mutate(applicants=Value+faktor1*Value+faktor2*Value+faktor3*Value),
-                       aes(x=TIME,y=applicants,group=GEO,color=GEO))+geom_smooth(method="auto",se=FALSE)
 
+
+napoved_graf <- ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% c("Germany")) %>%
+                         mutate(applicants=Value+faktor1*Value+faktor2*Value+faktor3*Value),
+                       aes(x=MONTH,y=applicants,group=GEO,color=GEO))+geom_smooth(method = "loess")
+
+lin <- lm(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany")) ),MONTH ~ Value)
+kv <- lm(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany")) ),MONTH ~ Value+I(Value^2))
+mls <- loess(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany"))),MONTH ~ Value)
+mgam <- gam(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany"))),MONTH ~ s(Value))
+sapply(list(lin, kv, mls, mgam), function(x) sum(x$residuals^2))
+
+#Ugotovitev, da na primeru Nemčije najbolj ustreza uporaba metode loess

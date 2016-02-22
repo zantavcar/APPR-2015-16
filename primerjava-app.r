@@ -1,4 +1,5 @@
 library(shiny)
+library(mgcv)
 options(scipen=999)
 ui <- fluidPage(
   
@@ -11,20 +12,16 @@ ui <- fluidPage(
       sliderInput(inputId="war",label="Conditions on a battlefield",min=-1,max=2,value=1,step=0.1)
       ),
     mainPanel(
-      dataTableOutput("table"),
-      plotOutput("plot"),
-      splitLayout(
-      plotOutput("age"),
-      plotOutput("origin"),
-      plotOutput("sex")
-      ),
-      plotOutput("prediction")
+      tabsetPanel(tabPanel("Comparison",dataTableOutput("table"),plotOutput("plot"),
+                   splitLayout(
+                     plotOutput("age"),
+                     plotOutput("origin"),
+                     plotOutput("sex"))),
+                  tabPanel("Prediction",plotOutput("prediction"))
+      )
   )
 )
 )
-
-
-
 server <- function(input, output) {
   output$table <- renderDataTable({tabela_Prosnje %>% filter(GEO %in% input$countries)},
                                   options = list(searching = FALSE, paging = FALSE))
@@ -49,9 +46,11 @@ server <- function(input, output) {
       geom_bar(stat="identity",position=position_dodge())+
       theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
       ggtitle(paste0("Origin of asylum seekers in ","selected countries"))+xlab("")+ylab("") })
-  output$prediction <- renderPlot({ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% input$countries)
-                                          %>%mutate(applicants=Value+Value*(input$weather*0.2+input$conditions*0.7+input$war*0.3)),
-                                          aes(x=TIME,y=applicants,group=GEO,color=GEO))+geom_smooth(method="auto",se=FALSE)})
+  output$prediction <- renderPlot({ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% input$countries) %>%
+                                            mutate(applicants=Value+Value*(0.15*input$weather+0.7*input$conditions+0.15*input$war)),
+                                          aes(x=MONTH,y=applicants,group=GEO,color=GEO))+geom_smooth(method = "loess")+
+                                          xlab("")+ylab("")+
+                                          ggtitle("Predictions of migrant flows")})
 }
 
 shinyApp(ui = ui, server = server)
