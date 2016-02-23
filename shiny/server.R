@@ -1,52 +1,34 @@
 library(shiny)
 
-if ("server.R" %in% dir()) {
-  setwd("..")
+shinyServer(
+server <- function(input, output) {
+  output$table <- renderDataTable({tabela_Prosnje %>% filter(GEO %in% input$countries)},
+                                  options = list(searching = FALSE, paging = FALSE))
+  output$plot <- renderPlot({ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
+                                                                GEO %in% input$countries),
+                                    aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()+
+      ggtitle("Number of asylum applicants by month in selected countries")+
+      xlab("")+ylab("")})
+  output$age <- renderPlot({ggplot(starost %>% filter(GEO %in% input$countries)) + 
+      aes(x=AGE,y=applicants,fill=GEO,color=GEO)+ 
+      geom_bar(stat="identity",position=position_dodge())+ 
+      theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+      ggtitle("Age of asylum seekers")+
+      xlab("")+ylab("")})
+  output$sex <- renderPlot({ggplot(spol %>% filter(GEO %in% input$countries)) + 
+      aes(x=SEX,y=applicants,fill=GEO,color=GEO)+ 
+      geom_bar(stat="identity",position=position_dodge())+ 
+      theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+      ggtitle(paste0("Sex of asylum seekers in ","selected countries"))+xlab("")+ylab("")})
+  output$origin <- renderPlot({ggplot(origin %>% filter(GEO %in% input$countries),
+                                      aes(x=CITIZEN,y=applicants,fill=GEO,color=GEO))+ 
+      geom_bar(stat="identity",position=position_dodge())+
+      theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+      ggtitle(paste0("Origin of asylum seekers in ","selected countries"))+xlab("")+ylab("") })
+  output$prediction <- renderPlot({ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% input$countries) %>%
+                                            mutate(applicants=Value+Value*(0.15*input$weather+0.7*input$conditions+0.15*input$war)),
+                                          aes(x=MONTH,y=applicants,group=GEO,color=GEO))+geom_smooth(method = "loess")+
+      xlab("")+ylab("")+
+      ggtitle("Predictions of migrant flows")})
 }
-source("lib/libraries.r", encoding = "UTF-8")
-source("uvoz/uvoz.r", encoding = "UTF-8")
-source("vizualizacija/vizualizacija.r", encoding = "UTF-8")
-source("analiza/analiza.r", encoding = "UTF-8")
-
-shinyServer(function(input, output) {
-  output$druzine <- DT::renderDataTable({
-      t <- data.frame(druzine)
-      colnames(t) <- c("1 otrok", "2 otroka", "3 otroci",
-                       ">= 4 otroci", "Povprečje")
-      t
-    })
-  
-  output$pokrajine <- renderUI(
-    selectInput("pokrajina", label="Izberi pokrajino",
-                choices=c("Vse", levels(obcine$Pokrajina)))
-  )
-  output$naselja <- renderPlot({
-    main <- "Pogostost števila naselij"
-    if (!is.null(input$pokrajina) && input$pokrajina %in% levels(obcine$Pokrajina)) {
-      t <- obcine[obcine$Pokrajina == input$pokrajina,4]
-      main <- paste(main, "v regiji", input$pokrajina)
-    } else {
-      t <- obcine[,4]
-    }
-    hist(t, main = main,
-         xlab = "Število naselij", ylab = "Število občin")
-  })
-  
-  output$zemljevid <- renderPlot({
-    n <- 100
-    barve <- topo.colors(n)[1+(n-1)*(druzine$povprecje-min.povprecje)/(max.povprecje-min.povprecje)]
-    plot(zemljevid, col = barve)
-    title("Povprečno število otrok v družini")
-  })
-  
-  output$povrsina <- renderPlot({
-    plot(obcine[[1]], obcine[[4]],
-         main = "Število naselij glede na površino občine",
-         xlab = expression("Površina (km"^2 * ")"),
-         ylab = "Št. naselij",
-         col = barve[obcine[[7]]],
-         pch = 18)
-    legend("topright", legend = names(barve), col = barve,
-           pch = 18, cex = 0.7, bg = "white")
-  })
-})
+)

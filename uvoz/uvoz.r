@@ -1,6 +1,4 @@
 
-#2. FAZA
-
 require(dplyr)
 require(gsubfn)
 require(ggplot2)
@@ -8,6 +6,7 @@ require(maptools)
 require(sp)
 require(mgcv)
 options(scipen=999)
+#Uvoz CSV datotek iz Eurostat
 
 #1.tabela - prošnje azilantov v letu 2015
 uvoz.Prosnje2015 <- function() {
@@ -28,25 +27,7 @@ uvoz.Prosnje2015 <- function() {
 tidy_Prosnje2015<-uvoz.Prosnje2015()
 message("Uvažam podatke prosilcev za azil v letu 2015...\n")
 
-#2. tabela - uvoz rezultatov prošenj za azil v letu 2015. 
-uvoz.Odlocitve2015 <- function() {
-  Odlocitve2015 <- read.csv2("podatki/Odlocitve2015.csv",
-                             na.strings=":",
-                             fileEncoding = "UTF-8",
-                             sep = ",")
-  tidy_Odlocitve2015 <- Odlocitve2015[c(-3,-4,-5,-7)]
-  tidy_Odlocitve2015[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
-                                     tidy_Odlocitve2015[,"GEO"],fixed=TRUE)
-  tidy_Odlocitve2015[,"GEO"] <- gsub("European Union (28 countries)","European Union",
-                                     tidy_Odlocitve2015[,"GEO"],fixed=TRUE)
-  tidy_Odlocitve2015[,"Value"] <-as.numeric(gsub(" ","",tidy_Odlocitve2015[,"Value"],fixed=TRUE))
-  return(tidy_Odlocitve2015)
-}
-
-tidy_Odlocitve2015 <- uvoz.Odlocitve2015()
-message("Uvažam podatke o odločitvah...\n")
-
-#3. tabela - poglobljena tabela prosilcev za azil (SPOL)
+#2. tabela - poglobljena tabela prosilcev za azil (SPOL)
 
 uvoz.Spol <- function() {
   Spol <- read.csv2("podatki/Spol.csv",
@@ -66,7 +47,7 @@ uvoz.Spol <- function() {
 tidy_Spol <- uvoz.Spol()
 message("Uvažam podatke o spolu azilantov...\n")
 
-#4. tabela - poglobljena analiza prosilcev za azil (STAROST)
+#3. tabela - poglobljena analiza prosilcev za azil (STAROST)
 uvoz.Starost <- function () {
   Starost <- read.csv2("podatki/Starost.csv",
                        na.strings=":",
@@ -84,7 +65,7 @@ uvoz.Starost <- function () {
 tidy_Starost <- uvoz.Starost()
 message("Uvažam podatke starosti azilantov...\n")
 
-#5. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
+#4. tabela - pogljobljena analiza prosilcev za azil (ORIGIN) 
 uvoz.Origin <- function () {
   Origin <- read.csv2("podatki/Origin.csv",
                       na.strings = ":",
@@ -105,7 +86,26 @@ uvoz.Origin <- function () {
 tidy_Origin <- uvoz.Origin()
 message("Uvažam podatke o državljanstvu azilantov...\n")
 
-#Uvoz tabele o prebivalstvu v evropskih državah (za zemljevid)
+#5. tabela - število prosilcev za azil v letu 2014 (za izračun prirasta v letu 2015)
+
+uvoz.Prosnje2014 <- function() {
+  Prosnje2014 <- read.csv2("podatki/Prosnje2014.csv",sep=",",
+                           na.strings=":",
+                           as.is=TRUE,
+                           fileEncoding="UTF-8")
+  
+  tidy_Prosnje2014 <- Prosnje2014[,c(-4,-5,-7)]
+  tidy_Prosnje2014[,"GEO"] <- gsub("Germany (until 1990 former territory of the FRG)","Germany",
+                                   tidy_Prosnje2014[,"GEO"],fixed=TRUE)
+  tidy_Prosnje2014[,"GEO"] <- gsub("European Union (28 countries)","European Union",
+                                   tidy_Prosnje2014[,"GEO"],fixed=TRUE)
+  tidy_Prosnje2014[,"Value"] <-as.numeric(gsub(" ","",tidy_Prosnje2014[,"Value"],fixed=TRUE))
+  return(tidy_Prosnje2014)
+}
+
+tidy_Prosnje2014<-uvoz.Prosnje2014()
+message("Uvažam podatke prosilcev za azil v letu 2014...\n")
+#Uvoz tabele o prebivalstvu v evropskih državah za zemljevid (HTML vir)
 
 require("rvest")
 url <- "https://en.wikipedia.org/wiki/Area_and_population_of_European_countries"
@@ -119,13 +119,13 @@ colnames(prebivalstvo.EU) <- c("drzava","prebivalstvo")
 prebivalstvo.EU[,"prebivalstvo"] <- as.numeric(gsub(',',"",prebivalstvo.EU[,"prebivalstvo"],fixed = FALSE))
 
 
-#ZA OBJAVO
+#ZA OBJAVO - primer v Tidy Data obliki
 objava_Prosnje <- tidy_Prosnje2015 %>% filter(GEO %in% c("European Union","Germany",
                                                      "Hungary","Sweden","Slovenia") &
                                             TIME %in% c("2015M01"))
 
 
-#NOVA TABELA ZA PREDSTAVITEV - VIZUALIZACIJA
+#Pregledna tabela za poročilo
 tidy_Prosnje2015 <- tidy_Prosnje2015 %>%
   mutate(MONTH = TIME %>% strapplyc("M([0-9]+)") %>% as.numeric())
 
@@ -147,13 +147,26 @@ Q4 <- tidy_Prosnje2015 %>%
 Total <- tidy_Prosnje2015 %>%
   filter(ASYL_APP == "Asylum applicant") %>%
   group_by(GEO) %>% summarise(applicants = sum(Value,na.rm= TRUE))
+total2015 <- as.numeric(unlist(Total[,"applicants"]))
 
+
+#Formiranje stolpca števila prošenj za azil v 2014 in izračun prirasta
+tidy_Prosnje2014 <- tidy_Prosnje2014 %>% filter(CITIZEN=="Total" & ASYL_APP=="Asylum applicant") %>%
+                    arrange(GEO)
+total2014 <- as.numeric(unlist(tidy_Prosnje2014[,"Value"]))
+tidy_Prosnje2014 <- tidy_Prosnje2014[c(-1,-3,-4)]
+tidy_Prosnje2014 <- tidy_Prosnje2014 %>% mutate(applicants=round(((total2015-total2014)/total2014)*100,2))
+tidy_Prosnje2014 <- tidy_Prosnje2014[c(-2)]
 
 tabela_Prosnje <- inner_join(Q1,Q2,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q3,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Q4,by="GEO")
 tabela_Prosnje <- right_join(tabela_Prosnje,Total,by="GEO")
-colnames(tabela_Prosnje) <- c("GEO","2015Q1","2015Q2","2015Q3","2015Q4","Total")
+tabela_Prosnje <- right_join(tabela_Prosnje,tidy_Prosnje2014,by="GEO")
+
+
+colnames(tabela_Prosnje) <- c("GEO","2015Q1","2015Q2","2015Q3","2015Q4","Total","Change on previous year [%]")
+#Tabela za poročilo 
 
 objava_tabela_Prosnje <- tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
                                                               "United Kingdom","Austria", "Sweden", 
@@ -171,7 +184,8 @@ objava_tabela_Prosnje <- inner_join(total, prebivalstvo.EU,
 graf_prosnje<-ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",
                                          GEO %in% c("Germany","Hungary","United Kingdom",
                                                     "Austria", "Sweden", "Italy", "France")),
-             aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()
+             aes(x = TIME, y = Value, group = GEO, color = GEO))+geom_line()+xlab("")+ylab("")+
+             theme(axis.text.x = element_text(angle = 70, vjust = 0.5))
 
 countries <- as.vector(tabela_Prosnje$GEO)
 
@@ -194,7 +208,7 @@ eu <- pretvori.zemljevid(svet, svet$continent == "Europe")
 map1 <- ggplot() +
   geom_polygon(data = eu,
                aes(x = long, y = lat, group = group, fill = applicants)) +
-  xlim(-10, 50) + ylim(34, 72) + ggtitle("Prošnje za azil na milijon prebivalstva") 
+  xlim(-10, 50) + ylim(34, 72) + ggtitle("Number of applicants per million inhabitants") + xlab("")+ylab("")
 
 #ZA POTREBE SHINY APLIKACIJE
 
@@ -207,7 +221,7 @@ spol_graf <- ggplot(spol %>% filter(GEO %in% c("Slovenia"))) +
   aes(x=SEX,y=applicants,fill=GEO,color=GEO)+ 
   geom_bar(stat="identity",position=position_dodge())+ 
   theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
-  ggtitle(paste0("Sex of asylum seekers in ","Slovenia"))
+  ggtitle(paste0("Sex of asylum seekers in ","Slovenia"))+xlab("")+ylab("")
 
 #STOLPČNI - Starost
 starost <- tidy_Starost %>%
@@ -218,6 +232,7 @@ starost_graf <- ggplot(starost %>% filter(GEO %in% c("Slovenia"))) +
   aes(x=AGE,y=applicants,fill=GEO,color=GEO)+ 
   geom_bar(stat="identity",position=position_dodge())+ 
   theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+  xlab("")+ylab("")+
   ggtitle(paste0("Age of asylum seekers in ","Slovenia"))
                 
 #STOLPČNI - Origin 
@@ -228,17 +243,18 @@ origin_graf <- ggplot(origin %>% filter(GEO %in% c("Slovenia")),
                       aes(x=factor(1), y=applicants, fill=CITIZEN)) +
   geom_bar(stat="identity", width=1) + coord_polar(theta="y") +
   ggtitle(paste0("Origin of asylum seekers in ","Slovenia")) +
-  labs(x="",y="")
+  labs(x="",y="")+theme(axis.text.x = element_text(angle = 70, vjust = 0.5))
 
-#PREDIKCIJSKI MODEL - test, narejen v Shiny
-faktor1=0.2
-faktor2=0.3
-faktor3=-0.3
+#PREDIKCIJSKI MODEL - testni model, faktorje prilagajamo v Shiny aplikaciji
+faktor1=0
+faktor2=0
+faktor3=0
 
 
-napoved_graf <- ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% c("Germany")) %>%
+napoved_graf <- ggplot(tidy_Prosnje2015 %>% filter(ASYL_APP == "Asylum applicant",GEO %in% c("Slovenia")) %>%
                          mutate(applicants=Value+faktor1*Value+faktor2*Value+faktor3*Value),
-                       aes(x=MONTH,y=applicants,group=GEO,color=GEO))+geom_smooth(method = "loess")
+                       aes(x=MONTH,y=applicants,group=GEO,color=GEO))+xlab("")+ylab("")+geom_smooth(method = "loess")
+                       
 
 lin <- lm(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany")) ),MONTH ~ Value)
 kv <- lm(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany")) ),MONTH ~ Value+I(Value^2))
@@ -246,4 +262,4 @@ mls <- loess(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany"))),MONTH ~ V
 mgam <- gam(data=(tidy_Prosnje2015 %>% filter(GEO %in% c("Germany"))),MONTH ~ s(Value))
 sapply(list(lin, kv, mls, mgam), function(x) sum(x$residuals^2))
 
-#Ugotovitev, da na primeru Nemčije najbolj ustreza uporaba metode loess
+#Ugotovitev, da na primeru Nemčije najbolj ustreza uporaba metode loess 
