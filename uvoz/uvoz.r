@@ -240,10 +240,10 @@ origin <- tidy_Origin %>%
   filter(ASYL_APP == "Asylum applicant") %>%
   group_by(GEO,CITIZEN) %>% summarise(applicants = sum(Value, na.rm=TRUE))
 origin_graf <- ggplot(origin %>% filter(GEO %in% c("Slovenia")),
-                      aes(x=factor(1), y=applicants, fill=CITIZEN)) +
-  geom_bar(stat="identity", width=1) + coord_polar(theta="y") +
-  ggtitle(paste0("Origin of asylum seekers in ","Slovenia")) +
-  labs(x="",y="")+theme(axis.text.x = element_text(angle = 70, vjust = 0.5))
+                      aes(x=CITIZEN,y=applicants,fill=GEO,color=GEO))+ 
+  geom_bar(stat="identity",position=position_dodge())+
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5))+
+  ggtitle(paste0("Origin of asylum seekers"))+xlab("")+ylab("")
 
 #PREDIKCIJSKI MODEL - testni model, faktorje prilagajamo v Shiny aplikaciji
 faktor1=0

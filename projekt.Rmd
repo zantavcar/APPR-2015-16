@@ -2,12 +2,13 @@
 title: "Poročilo pri predmetu Analiza podatkov s programom R"
 author: "Žan Tavčar"
 output:
+  html_document: default
   pdf_document:
     includes:
       in_header: lib/styles.sty
     latex_engine: xelatex
-  html_document: default
   word_document: default
+runtime: shiny
 ---
 
 ```{r setup, echo=FALSE, results='hide', message=FALSE,warning=FALSE,include=FALSE}
@@ -67,19 +68,19 @@ kable(tabela_Prosnje %>% filter(GEO %in% c("European Union","Germany","Hungary",
 Prav tako sem s tabele *tidy_Prosnje2015* ustvaril graf, ki prikazuje dinamiko prošenj za azil nekaterih nabolj obleganih evropskih držav skozi leto 2015.
 
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center'}
 print(graf_prosnje)
 ```
 
 Menil sem, da absolutna vrednost števila prošenj za azil ne prikaže realnega stanja, zato sem s pomočjo tabele *population*, ki sem jo pobral z URL vira navedenega v uvodu, izračunal število prošenj za azil na milijon prebivalstva in rezultate prikazal na zemljevidu.
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center'}
 print(map1)
 ```
 
 Osredotočil sem se predvsem na sestavo migrantskega prebivalstva, in sicer na spol, starost ter njihovo narodno sestavo. Za lepši prikaz razmerja med skupinami sem za vse tri kategorije naredil stolpčne diagrame, kjer lahko v Shiny aplikaciji, ki je opisana spodaj, lepo primerjamo kakšna je sestava migrantov v različnih državah EU. Spodaj je na primeru Slovenije prikazana narodna sestava migrantov.
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=5,fig.height=3}
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center'}
 print(spol_graf)
 ```
 
@@ -87,7 +88,7 @@ print(spol_graf)
 
 Na podlagi števila vloženih prošenj za azil sem želel napraviti model, ki bo napovedal dinamiko prošenj v letu 2016. Ker sem hotel čim natančnejšo aproksimacijo podatkov, sem na primeru Nemčije pogledal, kako dober je približek z linearno ter kvadratno funkcijo. A aproksimacija ni bila dobra, zato pa sem s pomočjo funkcije *loess* iz knjižnice *mgcv* dobil model, s katerim sem naredil napoved za prihodnje leto, spodaj je prikazna dinamika za leto 2016 v Nemčiji.
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE}
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center'}
 print(napoved_graf)
 ```
 
@@ -110,3 +111,8 @@ V stranskem oknu so pod državami trije drsniki, in sicer:
 * **Conditions of a battlefileld** - označuje razmere na bližnjem Vzhodu, bolj desno je drsnik nastavljen, bolj vzdržne so razmere
 
 Uporabnik lahko tako sam oblikuje svoj graf, ki v odvisnosti zgornjih treh spremenljivk napove dinamiko prošenj v prihodnjem letu. 
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center'}
+shinyAppDir("shiny", options=list(width="100%", height=1350))
+```
+
